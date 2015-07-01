@@ -3,22 +3,21 @@ package main
 /*
 #cgo LDFLAGS: -ljack
 #include <stdlib.h>
-#include <stdio.h>
 #include <jack/jack.h>
 
-extern int Process(int, void *);
+extern int Process(unsigned int, void *);
+extern void Shutdown(void *);
 
 jack_client_t* jack_client_open_single(const char * client_name, int options, int * status) {
 	return jack_client_open(client_name, (jack_options_t) options, (jack_status_t *) status);
 }
 
-int process(uint32_t nframes, void * arg) {
-	printf("%d", nframes);
-	return 0;
+int jack_set_process_callback_go(jack_client_t * client, void * callback) {
+	return jack_set_process_callback(client, Process, callback);
 }
 
-int jack_set_process_callback_go(jack_client_t * client, void * callback) {
-	return jack_set_process_callback(client, process, 0);
+void jack_on_shutdown_go(jack_client_t * client, void * callback) {
+	jack_on_shutdown(client, Shutdown, callback);
 }
 */
 import "C"
@@ -64,12 +63,16 @@ const (
 )
 
 type Client struct {
-	handler *C.struct__jack_client
+	handler          *C.struct__jack_client
+	processCallback  JackProcessCallback
+	shutdownCallback JackProcessCallback
 }
 
 type Port struct {
 	handler *C.struct__jack_port
 }
+
+type AudioSample float32
 
 func ClientOpen(name string, options int) (*Client, int) {
 	cname := C.CString(name)
@@ -79,7 +82,8 @@ func ClientOpen(name string, options int) (*Client, int) {
 	cclient := C.jack_client_open_single(cname, C.int(options), &status)
 	var client *Client
 	if cclient != nil {
-		client = &Client{cclient}
+		client = new(Client)
+		client.handler = cclient
 	}
 	return client, int(status)
 }
@@ -109,8 +113,13 @@ func (client *Client) PortRegister(portName, portType string, flags, buffer_size
 	return nil
 }
 
-func (client *Client) SetProcessCallback(callback func(C.int, unsafe.Pointer) C.int) int {
-	return int(C.jack_set_process_callback_go(client.handler, unsafe.Pointer(&callback)))
+func (client *Client) SetProcessCallback(callback JackProcessCallback) int {
+	client.processCallback = callback
+	return int(C.jack_set_process_callback_go(client.handler, unsafe.Pointer(&client.processCallback)))
+}
+
+func (client *Client) OnShutdown(callback JackShutdownCallback) {
+	C.jack_on_shutdown_go(client.handler, unsafe.Pointer(&client.shutdownCallback))
 }
 
 func (client *Client) Close() int {
@@ -120,9 +129,32 @@ func (client *Client) Close() int {
 	return int(C.jack_client_close(client.handler))
 }
 
-func Process(nframes C.int, arg unsafe.Pointer) C.int {
-	fmt.Println("Frames:", nframes)
+func (port *Port) GetBuffer(nframes uint32) []AudioSample {
+	samples := C.jack_port_get_buffer(port.handler, C.jack_nframes_t(nframes))
+	return (*[1 << 30]AudioSample)(samples)[:nframes:nframes]
+}
+
+var PortsIn []*Port
+var PortsOut []*Port
+var Echo []chan AudioSample
+
+func process(nframes uint32) int {
+	for i, in := range PortsIn {
+		samplesIn := in.GetBuffer(nframes)
+		samplesOut := PortsOut[i].GetBuffer(nframes)
+		for i2, sample := range samplesIn {
+			if len(Echo[i]) >= 10*1024 {
+				sample += <-Echo[i] / 4
+			}
+			samplesOut[i2] = sample
+			Echo[i] <- sample
+		}
+	}
 	return 0
+}
+
+func shutdown() {
+	fmt.Println("Shutting down")
 }
 
 func main() {
@@ -132,16 +164,21 @@ func main() {
 		return
 	}
 	defer client.Close()
-	if code := client.SetProcessCallback(Process); code != 0 {
+	if code := client.SetProcessCallback(process); code != 0 {
 		fmt.Println("Failed to set process callback:", code)
 		return
 	}
+	client.OnShutdown(shutdown)
 	if code := client.Activate(); code != 0 {
 		fmt.Println("Failed to activate client:", code)
 		return
 	}
-	for port := 0; port < 2; port++ {
-		fmt.Println("Registered Port:", client.PortRegister(fmt.Sprintf("port_%d", port), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 128))
+	for i := 0; i < 2; i++ {
+		portIn := client.PortRegister(fmt.Sprintf("in_%d", i), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0)
+		portOut := client.PortRegister(fmt.Sprintf("out_%d", i), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)
+		PortsIn = append(PortsIn, portIn)
+		PortsOut = append(PortsOut, portOut)
+		Echo = append(Echo, make(chan AudioSample, 10*1024))
 	}
 	fmt.Println(client.GetName())
 	<-make(chan struct{})
