@@ -67,6 +67,7 @@ func process(nframes uint32) int {
  - `int jack_client_close()`
  - `int jack_client_name_size()`
  - `char* jack_get_client_name(client)`
+ - `jack_nframes_t jack_get_sample_rate(client)`
  - `void jack_on_shutdown(client, callback, arg)`
  - `int jack_set_process_callback(client, callback, arg)`
  - `jack_port_t jack_port_register(client, name, type, flags, buffer_size)`

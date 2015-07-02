@@ -97,6 +97,10 @@ func (client *Client) GetName() string {
 	return C.GoString(C.jack_get_client_name(client.handler))
 }
 
+func (client *Client) GetSampleRate() uint32 {
+	return uint32(C.jack_get_sample_rate(client.handler))
+}
+
 func (client *Client) PortRegister(portName, portType string, flags, bufferSize uint64) *Port {
 	cname := C.CString(portName)
 	defer C.free(unsafe.Pointer(cname))
