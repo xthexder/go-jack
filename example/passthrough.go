@@ -29,7 +29,7 @@ func shutdown() {
 }
 
 func main() {
-	client, status := jack.ClientOpen("Go Passthrough", jack.JackNoStartServer)
+	client, status := jack.ClientOpen("Go Passthrough", jack.NoStartServer)
 	if status != 0 {
 		fmt.Println("Status:", status)
 		return
@@ -48,11 +48,11 @@ func main() {
 	}
 
 	for i := 0; i < channels; i++ {
-		portIn := client.PortRegister(fmt.Sprintf("in_%d", i), jack.JACK_DEFAULT_AUDIO_TYPE, jack.JackPortIsInput, 0)
+		portIn := client.PortRegister(fmt.Sprintf("in_%d", i), jack.DEFAULT_AUDIO_TYPE, jack.PortIsInput, 0)
 		PortsIn = append(PortsIn, portIn)
 	}
 	for i := 0; i < channels; i++ {
-		portOut := client.PortRegister(fmt.Sprintf("out_%d", i), jack.JACK_DEFAULT_AUDIO_TYPE, jack.JackPortIsOutput, 0)
+		portOut := client.PortRegister(fmt.Sprintf("out_%d", i), jack.DEFAULT_AUDIO_TYPE, jack.PortIsOutput, 0)
 		PortsOut = append(PortsOut, portOut)
 	}
 

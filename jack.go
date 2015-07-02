@@ -25,44 +25,44 @@ import "unsafe"
 
 const (
 	// JackOptions
-	JackNullOption    = C.JackNullOption
-	JackNoStartServer = C.JackNoStartServer
-	JackUseExactName  = C.JackUseExactName
-	JackServerName    = C.JackServerName
-	JackLoadName      = C.JackLoadName
-	JackLoadInit      = C.JackLoadInit
-	JackSessionID     = C.JackSessionID
+	NullOption    = C.JackNullOption
+	NoStartServer = C.JackNoStartServer
+	UseExactName  = C.JackUseExactName
+	ServerName    = C.JackServerName
+	LoadName      = C.JackLoadName
+	LoadInit      = C.JackLoadInit
+	SessionID     = C.JackSessionID
 
 	// JackPortFlags
-	JackPortIsInput    = C.JackPortIsInput
-	JackPortIsOutput   = C.JackPortIsOutput
-	JackPortIsPhysical = C.JackPortIsPhysical
-	JackPortCanMonitor = C.JackPortCanMonitor
-	JackPortIsTerminal = C.JackPortIsTerminal
+	PortIsInput    = C.JackPortIsInput
+	PortIsOutput   = C.JackPortIsOutput
+	PortIsPhysical = C.JackPortIsPhysical
+	PortCanMonitor = C.JackPortCanMonitor
+	PortIsTerminal = C.JackPortIsTerminal
 
 	// JackStatus
-	JackFailure       = C.JackFailure
-	JackInvalidOption = C.JackInvalidOption
-	JackNameNotUnique = C.JackNameNotUnique
-	JackServerStarted = C.JackServerStarted
-	JackServerFailed  = C.JackServerFailed
-	JackServerError   = C.JackServerError
-	JackNoSuchClient  = C.JackNoSuchClient
-	JackLoadFailure   = C.JackLoadFailure
-	JackInitFailure   = C.JackInitFailure
-	JackShmFailure    = C.JackShmFailure
-	JackVersionError  = C.JackVersionError
-	JackBackendError  = C.JackBackendError
-	JackClientZombie  = C.JackClientZombie
+	Failure       = C.JackFailure
+	InvalidOption = C.JackInvalidOption
+	NameNotUnique = C.JackNameNotUnique
+	ServerStarted = C.JackServerStarted
+	ServerFailed  = C.JackServerFailed
+	ServerError   = C.JackServerError
+	NoSuchClient  = C.JackNoSuchClient
+	LoadFailure   = C.JackLoadFailure
+	InitFailure   = C.JackInitFailure
+	ShmFailure    = C.JackShmFailure
+	VersionError  = C.JackVersionError
+	BackendError  = C.JackBackendError
+	ClientZombie  = C.JackClientZombie
 
-	JACK_DEFAULT_AUDIO_TYPE = "32 bit float mono audio"
-	JACK_DEFAULT_MIDI_TYPE  = "8 bit raw midi"
+	DEFAULT_AUDIO_TYPE = "32 bit float mono audio"
+	DEFAULT_MIDI_TYPE  = "8 bit raw midi"
 )
 
 type Client struct {
 	handler          *C.struct__jack_client
-	processCallback  JackProcessCallback
-	shutdownCallback JackProcessCallback
+	processCallback  ProcessCallback
+	shutdownCallback ShutdownCallback
 }
 
 type Port struct {
@@ -97,25 +97,26 @@ func (client *Client) GetName() string {
 	return C.GoString(C.jack_get_client_name(client.handler))
 }
 
-func (client *Client) PortRegister(portName, portType string, flags, buffer_size uint64) *Port {
+func (client *Client) PortRegister(portName, portType string, flags, bufferSize uint64) *Port {
 	cname := C.CString(portName)
 	defer C.free(unsafe.Pointer(cname))
 	ctype := C.CString(portType)
 	defer C.free(unsafe.Pointer(ctype))
 
-	cport := C.jack_port_register(client.handler, cname, ctype, C.ulong(flags), C.ulong(buffer_size))
+	cport := C.jack_port_register(client.handler, cname, ctype, C.ulong(flags), C.ulong(bufferSize))
 	if cport != nil {
 		return &Port{cport}
 	}
 	return nil
 }
 
-func (client *Client) SetProcessCallback(callback JackProcessCallback) int {
+func (client *Client) SetProcessCallback(callback ProcessCallback) int {
 	client.processCallback = callback
 	return int(C.jack_set_process_callback_go(client.handler, unsafe.Pointer(&client.processCallback)))
 }
 
-func (client *Client) OnShutdown(callback JackShutdownCallback) {
+func (client *Client) OnShutdown(callback ShutdownCallback) {
+	client.shutdownCallback = callback
 	C.jack_on_shutdown_go(client.handler, unsafe.Pointer(&client.shutdownCallback))
 }
 
