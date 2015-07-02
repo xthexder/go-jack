@@ -5,12 +5,12 @@ Go bindings for [Jack Audio Connection Kit](http://jackaudio.org/)
 
 For a working passthrough example see [example/passthrough.go](https://github.com/xthexder/go-jack/blob/master/example/passthrough.go)
 
-Import the package:
+**Import the package:**
 ```go
 import "github.com/xthexder/go-jack"
 ```
 
-Connect to an existing jack server:
+**Connect to an existing jack server:**
 ```go
 client, _ := jack.ClientOpen("Example Client", jack.JackNoStartServer)
 if client == nil {
@@ -20,7 +20,7 @@ if client == nil {
 defer client.Close()
 ```
 
-Add a processing callback:
+**Add a processing callback:**
 ```go
 func process(nframes uint32) int {
 	// Do processing here
@@ -35,7 +35,7 @@ if code := client.SetProcessCallback(process); code != 0 {
 }
 ```
 
-Activate the client:
+**Activate the client:**
 ```go
 if code := client.Activate(); code != 0 {
 	fmt.Println("Failed to activate client.")
@@ -43,12 +43,12 @@ if code := client.Activate(); code != 0 {
 }
 ```
 
-Add an output port:
+**Add an output port:**
 ```go
 port := client.PortRegister("out_1", jack.DEFAULT_AUDIO_TYPE, jack.PortIsOutput, 0)
 ```
 
-Output a sine wave:
+**Output a sine wave:**
 ```go
 var Port *jack.Port
 
