@@ -5,19 +5,19 @@ package jack
 #include <stdlib.h>
 #include <jack/jack.h>
 
-extern int Process(unsigned int, void *);
-extern void Shutdown(void *);
+extern int goProcess(unsigned int, void *);
+extern void goShutdown(void *);
 
 jack_client_t* jack_client_open_single(const char * client_name, int options, int * status) {
 	return jack_client_open(client_name, (jack_options_t) options, (jack_status_t *) status);
 }
 
 int jack_set_process_callback_go(jack_client_t * client, void * callback) {
-	return jack_set_process_callback(client, Process, callback);
+	return jack_set_process_callback(client, goProcess, callback);
 }
 
 void jack_on_shutdown_go(jack_client_t * client, void * callback) {
-	jack_on_shutdown(client, Shutdown, callback);
+	jack_on_shutdown(client, goShutdown, callback);
 }
 */
 import "C"
