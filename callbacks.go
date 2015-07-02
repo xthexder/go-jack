@@ -1,4 +1,4 @@
-package main
+package jack
 
 import "C"
 import "unsafe"

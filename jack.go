@@ -1,4 +1,4 @@
-package main
+package jack
 
 /*
 #cgo LDFLAGS: -ljack
@@ -21,10 +21,7 @@ void jack_on_shutdown_go(jack_client_t * client, void * callback) {
 }
 */
 import "C"
-import (
-	"fmt"
-	"unsafe"
-)
+import "unsafe"
 
 const (
 	// JackOptions
@@ -132,54 +129,4 @@ func (client *Client) Close() int {
 func (port *Port) GetBuffer(nframes uint32) []AudioSample {
 	samples := C.jack_port_get_buffer(port.handler, C.jack_nframes_t(nframes))
 	return (*[1 << 30]AudioSample)(samples)[:nframes:nframes]
-}
-
-var PortsIn []*Port
-var PortsOut []*Port
-var Echo []chan AudioSample
-
-func process(nframes uint32) int {
-	for i, in := range PortsIn {
-		samplesIn := in.GetBuffer(nframes)
-		samplesOut := PortsOut[i].GetBuffer(nframes)
-		for i2, sample := range samplesIn {
-			if len(Echo[i]) >= 10*1024 {
-				sample += <-Echo[i] / 4
-			}
-			samplesOut[i2] = sample
-			Echo[i] <- sample
-		}
-	}
-	return 0
-}
-
-func shutdown() {
-	fmt.Println("Shutting down")
-}
-
-func main() {
-	client, status := ClientOpen("Go Test", JackNoStartServer)
-	if status != 0 {
-		fmt.Println("Status:", status)
-		return
-	}
-	defer client.Close()
-	if code := client.SetProcessCallback(process); code != 0 {
-		fmt.Println("Failed to set process callback:", code)
-		return
-	}
-	client.OnShutdown(shutdown)
-	if code := client.Activate(); code != 0 {
-		fmt.Println("Failed to activate client:", code)
-		return
-	}
-	for i := 0; i < 2; i++ {
-		portIn := client.PortRegister(fmt.Sprintf("in_%d", i), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0)
-		portOut := client.PortRegister(fmt.Sprintf("out_%d", i), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0)
-		PortsIn = append(PortsIn, portIn)
-		PortsOut = append(PortsOut, portOut)
-		Echo = append(Echo, make(chan AudioSample, 10*1024))
-	}
-	fmt.Println(client.GetName())
-	<-make(chan struct{})
 }
