@@ -12,7 +12,7 @@ import "github.com/xthexder/go-jack"
 
 **Connect to an existing jack server:**
 ```go
-client, _ := jack.ClientOpen("Example Client", jack.JackNoStartServer)
+client, _ := jack.ClientOpen("Example Client", jack.NoStartServer)
 if client == nil {
 	fmt.Println("Could not connect to jack server.")
 	return
