@@ -36,9 +36,9 @@ func goPortRegistration(port uint, register int, wrapper unsafe.Pointer) {
 }
 
 //export goPortRename
-func goPortRename(port uint, oldName, newName *C.char, wrapper unsafe.Pointer) int {
+func goPortRename(port uint, oldName, newName *C.char, wrapper unsafe.Pointer) {
 	callback := (*PortRenameCallback)(wrapper)
-	return (*callback)(PortId(port), C.GoString(oldName), C.GoString(newName))
+	(*callback)(PortId(port), C.GoString(oldName), C.GoString(newName))
 }
 
 //export goPortConnect

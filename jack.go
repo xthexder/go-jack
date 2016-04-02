@@ -9,7 +9,7 @@ extern int goProcess(unsigned int, void *);
 extern int goBufferSize(uint, void *);
 extern int goSampleRate(uint, void *);
 extern void goPortRegistration(jack_port_id_t, int, void *);
-extern int goPortRename(jack_port_id_t, const char *, const char *, void *);
+extern void goPortRename(jack_port_id_t, const char *, const char *, void *);
 extern void goPortConnect(jack_port_id_t, jack_port_id_t, int, void *);
 extern void goShutdown(void *);
 
