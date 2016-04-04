@@ -4,6 +4,7 @@ package jack
 #cgo LDFLAGS: -ljack
 #include <stdlib.h>
 #include <jack/jack.h>
+#include <jack/midiport.h>
 
 extern int goProcess(unsigned int, void *);
 extern int goBufferSize(uint, void *);
@@ -300,6 +301,28 @@ func (port *Port) GetType() string {
 func (port *Port) GetBuffer(nframes uint32) []AudioSample {
 	samples := C.jack_port_get_buffer(port.handler, C.jack_nframes_t(nframes))
 	return (*[1 << 30]AudioSample)(samples)[:nframes:nframes]
+}
+
+type MidiData struct {
+	Time   uint32
+	Buffer []byte
+}
+
+func (port *Port) GetMidiEvents(nframes uint32) []*MidiData {
+	var event C.jack_midi_event_t
+	samples := C.jack_port_get_buffer(port.handler, C.jack_nframes_t(nframes))
+	nEvents := uint32(C.jack_midi_get_event_count(samples))
+	events := make([]*MidiData, nEvents, nEvents)
+	for i := range events {
+		C.jack_midi_event_get(&event, samples, C.uint32_t(i))
+		size := event.size
+		buffer := C.GoBytes(unsafe.Pointer(event.buffer), C.int(size))
+		events[i] = &MidiData{
+			Time:   uint32(event.time),
+			Buffer: buffer,
+		}
+	}
+	return events
 }
 
 func (port *Port) GetConnections() []string {
