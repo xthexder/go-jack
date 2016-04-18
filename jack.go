@@ -308,6 +308,8 @@ type MidiData struct {
 	Buffer []byte
 }
 
+type MidiBuffer *[]byte
+
 func (port *Port) GetMidiEvents(nframes uint32) []*MidiData {
 	var event C.jack_midi_event_t
 	samples := C.jack_port_get_buffer(port.handler, C.jack_nframes_t(nframes))
@@ -315,14 +317,28 @@ func (port *Port) GetMidiEvents(nframes uint32) []*MidiData {
 	events := make([]*MidiData, nEvents, nEvents)
 	for i := range events {
 		C.jack_midi_event_get(&event, samples, C.uint32_t(i))
-		size := event.size
-		buffer := C.GoBytes(unsafe.Pointer(event.buffer), C.int(size))
+		buffer := C.GoBytes(unsafe.Pointer(event.buffer), C.int(event.size))
 		events[i] = &MidiData{
 			Time:   uint32(event.time),
 			Buffer: buffer,
 		}
 	}
 	return events
+}
+
+func (port *Port) MidiClearBuffer(nframes uint32) MidiBuffer {
+	buffer := C.jack_port_get_buffer(port.handler, C.jack_nframes_t(nframes))
+	C.jack_midi_clear_buffer(buffer)
+	return MidiBuffer(buffer)
+}
+
+func (port *Port) MidiEventWrite(event *MidiData, buffer MidiBuffer) int {
+	return int(C.jack_midi_event_write(
+		unsafe.Pointer(buffer),                  // port_buffer
+		C.jack_nframes_t(event.Time),            // time
+		(*C.jack_midi_data_t)(&event.Buffer[0]), // data
+		C.size_t(len(event.Buffer)),             // data_size
+	))
 }
 
 func (port *Port) GetConnections() []string {
