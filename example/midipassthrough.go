@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/esqilin/go-jack"
+	"github.com/xthexder/go-jack"
 )
 
 var (
