@@ -1,6 +1,5 @@
 build:
-	go build passthrough.go
+	go build passthrough.go midipassthrough.go
 
 run:
 	./passthrough
-
