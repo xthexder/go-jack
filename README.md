@@ -73,7 +73,7 @@ func process(nframes uint32) int {
  - `jack_port_t jack_port_register(client, name, type, flags, buffer_size)`
  - `void* jack_port_get_buffer(port, nframes)`
  - `int jack_midi_event_get(event, port_buffer, event_index)`
- - `void jack_midi_clear_buffer(void* port_buffer)`
+ - `void jack_midi_clear_buffer(port_buffer)`
  - `int jack_midi_event_write(port_buffer, time, data, data_size)`
 
 See [Official Jack API](http://jackaudio.org/api/jack_8h.html) for detailed documentation on each of these functions.
