@@ -13,9 +13,19 @@ extern void goPortRegistration(jack_port_id_t, int, void *);
 extern void goPortRename(jack_port_id_t, const char *, const char *, void *);
 extern void goPortConnect(jack_port_id_t, jack_port_id_t, int, void *);
 extern void goShutdown(void *);
+extern void goErrorFunction(const char *);
+extern void goInfoFunction(const char *);
 
 jack_client_t* jack_client_open_go(const char * client_name, int options, int * status) {
 	return jack_client_open(client_name, (jack_options_t) options, (jack_status_t *) status);
+}
+
+void jack_set_error_function_go() {
+	jack_set_error_function(goErrorFunction);
+}
+
+void jack_set_info_function_go() {
+	jack_set_info_function(goInfoFunction);
 }
 
 int jack_set_process_callback_go(jack_client_t * client, void * callback) {
@@ -98,6 +108,11 @@ type Client struct {
 
 type AudioSample float32
 
+var (
+	errorFunction ErrorFunction = nil
+	infoFunction  InfoFunction  = nil
+)
+
 func ClientOpen(name string, options int) (*Client, int) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
@@ -114,6 +129,16 @@ func ClientOpen(name string, options int) (*Client, int) {
 
 func ClientNameSize() int {
 	return int(C.jack_client_name_size())
+}
+
+func SetErrorFunction(callback ErrorFunction) {
+	errorFunction = callback
+	C.jack_set_error_function_go()
+}
+
+func SetInfoFunction(callback InfoFunction) {
+	infoFunction = callback
+	C.jack_set_info_function_go()
 }
 
 func (client *Client) Activate() int {
