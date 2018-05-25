@@ -3,7 +3,11 @@ package jack
 import "C"
 import "unsafe"
 
-type ProcessCallback func(uint32) int
+type ProcessCallback func(uint32, *interface{}) int
+type processCallbackWithArgs struct {
+	callback ProcessCallback
+	args     *interface{}
+}
 type BufferSizeCallback func(uint32) int
 type SampleRateCallback func(uint32) int
 type PortRegistrationCallback func(PortId, bool)
@@ -14,7 +18,13 @@ type ShutdownCallback func()
 //export goProcess
 func goProcess(nframes uint, wrapper unsafe.Pointer) int {
 	callback := (*ProcessCallback)(wrapper)
-	return (*callback)(uint32(nframes))
+	return (*callback)(uint32(nframes), nil)
+}
+
+//export goProcessWithArgs
+func goProcessWithArgs(nframes uint, wrapper unsafe.Pointer) int {
+	ret := (*processCallbackWithArgs)(wrapper)
+	return (*ret).callback(uint32(nframes), (*ret).args)
 }
 
 //export goBufferSize
