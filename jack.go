@@ -149,7 +149,7 @@ func (client *Client) SetProcessCallback(callback ProcessCallback) int {
 	))
 }
 
-func (client *Client) SetProcessCallbackWithArgs(callback ProcessCallback, args *interface{}) int {
+func (client *Client) SetProcessCallbackWithArgs(callback ProcessCallback, args interface{}) int {
 	client.processCallback = callback
 	return int(C.jack_set_process_callback_with_args_go(
 		client.handler,
