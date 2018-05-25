@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/xthexder/go-jack"
 )
@@ -23,27 +22,26 @@ func process(nframes uint32) int {
 	return 0
 }
 
-func shutdown() {
-	fmt.Println("Shutting down")
-	os.Exit(1)
-}
-
 func main() {
 	client, status := jack.ClientOpen("Go Passthrough", jack.NoStartServer)
 	if status != 0 {
-		fmt.Println("Status:", status)
+		fmt.Println("Status:", jack.StrError(status))
 		return
 	}
 	defer client.Close()
 
 	if code := client.SetProcessCallback(process); code != 0 {
-		fmt.Println("Failed to set process callback:", code)
+		fmt.Println("Failed to set process callback:", jack.StrError(code))
 		return
 	}
-	client.OnShutdown(shutdown)
+	shutdown := make(chan struct{})
+	client.OnShutdown(func() {
+		fmt.Println("Shutting down")
+		close(shutdown)
+	})
 
 	if code := client.Activate(); code != 0 {
-		fmt.Println("Failed to activate client:", code)
+		fmt.Println("Failed to activate client:", jack.StrError(code))
 		return
 	}
 
@@ -57,5 +55,5 @@ func main() {
 	}
 
 	fmt.Println(client.GetName())
-	<-make(chan struct{})
+	<-shutdown
 }
