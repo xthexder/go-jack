@@ -4,7 +4,7 @@ package jack
 import "C"
 import "fmt"
 
-func Strerror(status int) error {
+func StrError(status int) error {
 	if 0 == status {
 		return nil
 	}
