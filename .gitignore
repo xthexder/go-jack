@@ -24,4 +24,5 @@ _testmain.go
 *.prof
 
 /example/passthrough
+/example/midipassthrough
 

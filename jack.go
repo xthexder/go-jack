@@ -13,37 +13,47 @@ extern void goPortRegistration(jack_port_id_t, int, void *);
 extern void goPortRename(jack_port_id_t, const char *, const char *, void *);
 extern void goPortConnect(jack_port_id_t, jack_port_id_t, int, void *);
 extern void goShutdown(void *);
+extern void goErrorFunction(const char *);
+extern void goInfoFunction(const char *);
 
 jack_client_t* jack_client_open_go(const char * client_name, int options, int * status) {
 	return jack_client_open(client_name, (jack_options_t) options, (jack_status_t *) status);
 }
 
-int jack_set_process_callback_go(jack_client_t * client, void * callback) {
-	return jack_set_process_callback(client, goProcess, callback);
+int jack_set_process_callback_go(jack_client_t * client) {
+	return jack_set_process_callback(client, goProcess, client);
 }
 
-int jack_set_buffer_size_callback_go(jack_client_t * client, void * callback) {
-	return jack_set_buffer_size_callback(client, goBufferSize, callback);
+int jack_set_buffer_size_callback_go(jack_client_t * client) {
+	return jack_set_buffer_size_callback(client, goBufferSize, client);
 }
 
-int jack_set_sample_rate_callback_go(jack_client_t * client, void * callback) {
-	return jack_set_sample_rate_callback(client, goSampleRate, callback);
+int jack_set_sample_rate_callback_go(jack_client_t * client) {
+	return jack_set_sample_rate_callback(client, goSampleRate, client);
 }
 
-int jack_set_port_registration_callback_go(jack_client_t * client, void * callback) {
-	return jack_set_port_registration_callback(client, goPortRegistration, callback);
+int jack_set_port_registration_callback_go(jack_client_t * client) {
+	return jack_set_port_registration_callback(client, goPortRegistration, client);
 }
 
-int jack_set_port_rename_callback_go(jack_client_t * client, void * callback) {
-	return jack_set_port_rename_callback(client, goPortRename, callback);
+int jack_set_port_rename_callback_go(jack_client_t * client) {
+	return jack_set_port_rename_callback(client, goPortRename, client);
 }
 
-int jack_set_port_connect_callback_go(jack_client_t * client, void * callback) {
-	return jack_set_port_connect_callback(client, goPortConnect, callback);
+int jack_set_port_connect_callback_go(jack_client_t * client) {
+	return jack_set_port_connect_callback(client, goPortConnect, client);
 }
 
-void jack_on_shutdown_go(jack_client_t * client, void * callback) {
-	jack_on_shutdown(client, goShutdown, callback);
+void jack_on_shutdown_go(jack_client_t * client) {
+	jack_on_shutdown(client, goShutdown, client);
+}
+
+void jack_set_error_function_go() {
+	jack_set_error_function(goErrorFunction);
+}
+
+void jack_set_info_function_go() {
+	jack_set_info_function(goInfoFunction);
 }
 */
 import "C"
@@ -98,6 +108,12 @@ type Client struct {
 
 type AudioSample float32
 
+var (
+	clientMap     map[*C.struct__jack_client]*Client
+	errorFunction ErrorFunction = nil
+	infoFunction  InfoFunction  = nil
+)
+
 func ClientOpen(name string, options int) (*Client, int) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
@@ -106,14 +122,28 @@ func ClientOpen(name string, options int) (*Client, int) {
 	cclient := C.jack_client_open_go(cname, C.int(options), &status)
 	var client *Client
 	if cclient != nil {
+		if clientMap == nil {
+			clientMap = make(map[*C.struct__jack_client]*Client)
+		}
 		client = new(Client)
 		client.handler = cclient
+		clientMap[cclient] = client
 	}
 	return client, int(status)
 }
 
 func ClientNameSize() int {
 	return int(C.jack_client_name_size())
+}
+
+func SetErrorFunction(callback ErrorFunction) {
+	errorFunction = callback
+	C.jack_set_error_function_go()
+}
+
+func SetInfoFunction(callback InfoFunction) {
+	infoFunction = callback
+	C.jack_set_info_function_go()
 }
 
 func (client *Client) Activate() int {
@@ -138,44 +168,49 @@ func (client *Client) GetSampleRate() uint32 {
 
 func (client *Client) SetProcessCallback(callback ProcessCallback) int {
 	client.processCallback = callback
-	return int(C.jack_set_process_callback_go(client.handler, unsafe.Pointer(&client.processCallback)))
+	return int(C.jack_set_process_callback_go(client.handler))
 }
 
 func (client *Client) SetBufferSizeCallback(callback BufferSizeCallback) int {
 	client.bufferSizeCallback = callback
-	return int(C.jack_set_buffer_size_callback_go(client.handler, unsafe.Pointer(&client.bufferSizeCallback)))
+	return int(C.jack_set_buffer_size_callback_go(client.handler))
 }
 
 func (client *Client) SetSampleRateCallback(callback SampleRateCallback) int {
 	client.sampleRateCallback = callback
-	return int(C.jack_set_sample_rate_callback_go(client.handler, unsafe.Pointer(&client.sampleRateCallback)))
+	return int(C.jack_set_sample_rate_callback_go(client.handler))
 }
 
 func (client *Client) SetPortRegistrationCallback(callback PortRegistrationCallback) int {
 	client.portRegistrationCallback = callback
-	return int(C.jack_set_port_registration_callback_go(client.handler, unsafe.Pointer(&client.portRegistrationCallback)))
+	return int(C.jack_set_port_registration_callback_go(client.handler))
 }
 
 func (client *Client) SetPortRenameCallback(callback PortRenameCallback) int {
 	client.portRenameCallback = callback
-	return int(C.jack_set_port_rename_callback_go(client.handler, unsafe.Pointer(&client.portRenameCallback)))
+	return int(C.jack_set_port_rename_callback_go(client.handler))
 }
 
 func (client *Client) SetPortConnectCallback(callback PortConnectCallback) int {
 	client.portConnectCallback = callback
-	return int(C.jack_set_port_connect_callback_go(client.handler, unsafe.Pointer(&client.portConnectCallback)))
+	return int(C.jack_set_port_connect_callback_go(client.handler))
 }
 
 func (client *Client) OnShutdown(callback ShutdownCallback) {
 	client.shutdownCallback = callback
-	C.jack_on_shutdown_go(client.handler, unsafe.Pointer(&client.shutdownCallback))
+	C.jack_on_shutdown_go(client.handler)
 }
 
 func (client *Client) Close() int {
-	if client == nil {
+	if client == nil || client.handler == nil {
 		return 0
 	}
-	return int(C.jack_client_close(client.handler))
+	result := int(C.jack_client_close(client.handler))
+	if result == 0 {
+		delete(clientMap, client.handler)
+		client.handler = nil
+	}
+	return result
 }
 
 func (client *Client) PortRegister(portName, portType string, flags, bufferSize uint64) *Port {
