@@ -7,6 +7,7 @@ package jack
 #include <jack/midiport.h>
 
 extern int goProcess(unsigned int, void *);
+extern int goProcessWithArgs(unsigned int, void *);
 extern int goBufferSize(uint, void *);
 extern int goSampleRate(uint, void *);
 extern void goPortRegistration(jack_port_id_t, int, void *);
@@ -20,6 +21,10 @@ jack_client_t* jack_client_open_go(const char * client_name, int options, int * 
 
 int jack_set_process_callback_go(jack_client_t * client, void * callback) {
 	return jack_set_process_callback(client, goProcess, callback);
+}
+
+int jack_set_process_callback_with_args_go(jack_client_t * client, void * callback) {
+	return jack_set_process_callback(client, goProcessWithArgs, callback);
 }
 
 int jack_set_buffer_size_callback_go(jack_client_t * client, void * callback) {
@@ -138,7 +143,21 @@ func (client *Client) GetSampleRate() uint32 {
 
 func (client *Client) SetProcessCallback(callback ProcessCallback) int {
 	client.processCallback = callback
-	return int(C.jack_set_process_callback_go(client.handler, unsafe.Pointer(&client.processCallback)))
+	return int(C.jack_set_process_callback_go(
+		client.handler,
+		unsafe.Pointer(&client.processCallback),
+	))
+}
+
+func (client *Client) SetProcessCallbackWithArgs(callback ProcessCallback, args interface{}) int {
+	client.processCallback = callback
+	return int(C.jack_set_process_callback_with_args_go(
+		client.handler,
+		unsafe.Pointer(&processCallbackWithArgs{
+			callback: client.processCallback,
+			args:     args,
+		}),
+	))
 }
 
 func (client *Client) SetBufferSizeCallback(callback BufferSizeCallback) int {
