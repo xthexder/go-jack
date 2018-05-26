@@ -14,6 +14,8 @@ type PortRegistrationCallback func(PortId, bool)
 type PortRenameCallback func(PortId, string, string) int
 type PortConnectCallback func(PortId, PortId, bool)
 type ShutdownCallback func()
+type ErrorFunction func(string)
+type InfoFunction func(string)
 
 //export goProcess
 func goProcess(nframes uint, wrapper unsafe.Pointer) int {
@@ -61,4 +63,18 @@ func goPortConnect(aport, bport uint, connect int, wrapper unsafe.Pointer) {
 func goShutdown(wrapper unsafe.Pointer) {
 	callback := (*ShutdownCallback)(wrapper)
 	(*callback)()
+}
+
+//export goErrorFunction
+func goErrorFunction(msg *C.char) {
+	if errorFunction != nil {
+		errorFunction(C.GoString(msg))
+	}
+}
+
+//export goInfoFunction
+func goInfoFunction(msg *C.char) {
+	if infoFunction != nil {
+		infoFunction(C.GoString(msg))
+	}
 }
