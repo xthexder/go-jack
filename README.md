@@ -71,6 +71,7 @@ func process(nframes uint32) int {
  - `void jack_on_shutdown(client, callback, arg)`
  - `int jack_set_process_callback(client, callback, arg)`
  - `jack_port_t jack_port_register(client, name, type, flags, buffer_size)`
+ - `int jack_port_unregister(client, port)`
  - `void* jack_port_get_buffer(port, nframes)`
  - `int jack_midi_event_get(event, port_buffer, event_index)`
  - `void jack_midi_clear_buffer(port_buffer)`
