@@ -226,6 +226,10 @@ func (client *Client) PortRegister(portName, portType string, flags, bufferSize 
 	return nil
 }
 
+func (client *Client) PortUnregister(port *Port) int {
+	return int(C.jack_port_unregister(client.handler, port.handler))
+}
+
 func (client *Client) Connect(srcPort, dstPort string) int {
 	csrc := C.CString(srcPort)
 	defer C.free(unsafe.Pointer(csrc))
