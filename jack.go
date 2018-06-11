@@ -343,7 +343,7 @@ func (port *Port) GetType() string {
 
 func (port *Port) GetBuffer(nframes uint32) []AudioSample {
 	samples := C.jack_port_get_buffer(port.handler, C.jack_nframes_t(nframes))
-	return (*[1 << 30]AudioSample)(samples)[:nframes:nframes]
+	return (*[(1 << 29) - 1]AudioSample)(samples)[:nframes:nframes]
 }
 
 type MidiData struct {
