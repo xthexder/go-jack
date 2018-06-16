@@ -1,14 +1,17 @@
 package jack
 
 /*
-#cgo LDFLAGS: -ljack
+#cgo linux LDFLAGS: -ljack
+#cgo windows,386 LDFLAGS: -llibjack
+#cgo windows,amd64 LDFLAGS: -llibjack64
+
 #include <stdlib.h>
 #include <jack/jack.h>
 #include <jack/midiport.h>
 
 extern int goProcess(unsigned int, void *);
-extern int goBufferSize(uint, void *);
-extern int goSampleRate(uint, void *);
+extern int goBufferSize(unsigned int, void *);
+extern int goSampleRate(unsigned int, void *);
 extern void goPortRegistration(jack_port_id_t, int, void *);
 extern void goPortRename(jack_port_id_t, const char *, const char *, void *);
 extern void goPortConnect(jack_port_id_t, jack_port_id_t, int, void *);
