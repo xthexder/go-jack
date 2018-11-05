@@ -170,6 +170,10 @@ func (client *Client) GetBufferSize() uint32 {
 	return uint32(C.jack_get_buffer_size(client.handler))
 }
 
+func (client *Client) SetBufferSize(size uint32) int {
+	return int(C.jack_set_buffer_size(client.handler, C.uint32_t(size)))
+}
+
 func (client *Client) GetSampleRate() uint32 {
 	return uint32(C.jack_get_sample_rate(client.handler))
 }
