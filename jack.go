@@ -158,6 +158,10 @@ func (client *Client) Activate() int {
 	return int(C.jack_activate(client.handler))
 }
 
+func (client *Client) CPULoad() float32 {
+	return float32(C.jack_cpu_load(client.handler))
+}
+
 func (client *Client) GetName() string {
 	return C.GoString(C.jack_get_client_name(client.handler))
 }
