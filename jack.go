@@ -165,6 +165,18 @@ func (client *Client) IsRealtime() bool {
 	return C.jack_is_realtime(client.handler) != 0
 }
 
+func (client *Client) GetFramesSinceCycleStart() uint32 {
+	return uint32(C.jack_frames_since_cycle_start(client.handler))
+}
+
+func (client *Client) GetFrameTime() uint32 {
+	return uint32(C.jack_frame_time(client.handler))
+}
+
+func (client *Client) GetLastFrameTime() uint32 {
+	return uint32(C.jack_last_frame_time(client.handler))
+}
+
 func (client *Client) GetBufferSize() uint32 {
 	return uint32(C.jack_get_buffer_size(client.handler))
 }
