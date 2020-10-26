@@ -32,9 +32,9 @@ func goSampleRate(nframes uint, arg unsafe.Pointer) int {
 }
 
 //export goPortRegistration
-func goPortRegistration(port uint, register int, arg unsafe.Pointer) {
+func goPortRegistration(port uint, reg int, arg unsafe.Pointer) {
 	client := (*C.struct__jack_client)(arg)
-	clientMap[client].portRegistrationCallback(PortId(port), register != 0)
+	clientMap[client].portRegistrationCallback(PortId(port), reg != 0)
 }
 
 //export goPortRename
