@@ -32,6 +32,9 @@ func main() {
 	}
 	defer client.Close()
 
+	portIn = client.PortRegister("midi_in", jack.DEFAULT_MIDI_TYPE, jack.PortIsInput, 0)
+	portOut = client.PortRegister("midi_out", jack.DEFAULT_MIDI_TYPE, jack.PortIsOutput, 0)
+
 	if code := client.SetProcessCallback(process); code != 0 {
 		fmt.Println("Failed to set process callback: ", jack.StrError(code))
 		return
@@ -44,9 +47,6 @@ func main() {
 		fmt.Println("Failed to activate client: ", jack.StrError(code))
 		return
 	}
-
-	portIn = client.PortRegister("midi_in", jack.DEFAULT_MIDI_TYPE, jack.PortIsInput, 0)
-	portOut = client.PortRegister("midi_out", jack.DEFAULT_MIDI_TYPE, jack.PortIsOutput, 0)
 
 	fmt.Println(client.GetName())
 
