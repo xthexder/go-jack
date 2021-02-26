@@ -13,6 +13,7 @@ package jack
 extern int goProcess(unsigned int, void *);
 extern int goBufferSize(unsigned int, void *);
 extern int goSampleRate(unsigned int, void *);
+extern int goXRun(void *);
 extern void goPortRegistration(jack_port_id_t, int, void *);
 extern void goPortRename(jack_port_id_t, const char *, const char *, void *);
 extern void goPortConnect(jack_port_id_t, jack_port_id_t, int, void *);
@@ -34,6 +35,10 @@ int jack_set_buffer_size_callback_go(jack_client_t * client) {
 
 int jack_set_sample_rate_callback_go(jack_client_t * client) {
 	return jack_set_sample_rate_callback(client, goSampleRate, client);
+}
+
+int jack_set_xrun_callback_go(jack_client_t * client) {
+	return jack_set_xrun_callback(client, goXRun, client);
 }
 
 int jack_set_port_registration_callback_go(jack_client_t * client) {
@@ -105,6 +110,7 @@ type Client struct {
 	processCallback          ProcessCallback
 	bufferSizeCallback       BufferSizeCallback
 	sampleRateCallback       SampleRateCallback
+	xRunCallback             XRunCallback
 	portRegistrationCallback PortRegistrationCallback
 	portRenameCallback       PortRenameCallback
 	portConnectCallback      PortConnectCallback
@@ -187,6 +193,11 @@ func (client *Client) SetBufferSizeCallback(callback BufferSizeCallback) int {
 func (client *Client) SetSampleRateCallback(callback SampleRateCallback) int {
 	client.sampleRateCallback = callback
 	return int(C.jack_set_sample_rate_callback_go(client.handler))
+}
+
+func (client *Client) SetXRunCallback(callback XRunCallback) int {
+	client.xRunCallback = callback
+	return int(C.jack_set_xrun_callback_go(client.handler))
 }
 
 func (client *Client) SetPortRegistrationCallback(callback PortRegistrationCallback) int {
