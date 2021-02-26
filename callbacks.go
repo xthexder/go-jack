@@ -6,6 +6,7 @@ import "unsafe"
 type ProcessCallback func(uint32) int
 type BufferSizeCallback func(uint32) int
 type SampleRateCallback func(uint32) int
+type XRunCallback func() int
 type PortRegistrationCallback func(PortId, bool)
 type PortRenameCallback func(PortId, string, string)
 type PortConnectCallback func(PortId, PortId, bool)
@@ -29,6 +30,12 @@ func goBufferSize(nframes uint, arg unsafe.Pointer) int {
 func goSampleRate(nframes uint, arg unsafe.Pointer) int {
 	client := (*C.struct__jack_client)(arg)
 	return clientMap[client].sampleRateCallback(uint32(nframes))
+}
+
+//export goXRun
+func goXRun(arg unsafe.Pointer) int {
+	client := (*C.struct__jack_client)(arg)
+	return clientMap[client].xRunCallback()
 }
 
 //export goPortRegistration
