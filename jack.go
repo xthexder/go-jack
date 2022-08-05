@@ -167,6 +167,10 @@ func (client *Client) Activate() int {
 	return int(C.jack_activate(client.handler))
 }
 
+func (client *Client) CPULoad() float32 {
+	return float32(C.jack_cpu_load(client.handler))
+}
+
 func (client *Client) GetName() string {
 	return C.GoString(C.jack_get_client_name(client.handler))
 }
@@ -189,6 +193,10 @@ func (client *Client) GetLastFrameTime() uint32 {
 
 func (client *Client) GetBufferSize() uint32 {
 	return uint32(C.jack_get_buffer_size(client.handler))
+}
+
+func (client *Client) SetBufferSize(size uint32) int {
+	return int(C.jack_set_buffer_size(client.handler, C.uint32_t(size)))
 }
 
 func (client *Client) GetSampleRate() uint32 {
