@@ -4,7 +4,8 @@ package jack
 #cgo linux LDFLAGS: -ljack
 #cgo darwin LDFLAGS: -ljack
 #cgo windows,386 LDFLAGS: -llibjack
-#cgo windows,amd64 LDFLAGS: -llibjack64
+#cgo windows,amd64 LDFLAGS: -llibjack64 -L "C:/Program Files/JACK2/lib"
+#cgo windows,amd64 CFLAGS: -I "C:/Program Files/JACK2/include"
 
 #include <stdlib.h>
 #include <jack/jack.h>
@@ -66,8 +67,10 @@ void jack_set_info_function_go() {
 }
 */
 import "C"
-import "unsafe"
-import "sync"
+import (
+	"sync"
+	"unsafe"
+)
 
 const (
 	// JackOptions

@@ -30,6 +30,15 @@ func main() {
 	}
 	defer client.Close()
 
+	for i := 0; i < channels; i++ {
+		portIn := client.PortRegister(fmt.Sprintf("in_%d", i), jack.DEFAULT_AUDIO_TYPE, jack.PortIsInput, 0)
+		PortsIn = append(PortsIn, portIn)
+	}
+	for i := 0; i < channels; i++ {
+		portOut := client.PortRegister(fmt.Sprintf("out_%d", i), jack.DEFAULT_AUDIO_TYPE, jack.PortIsOutput, 0)
+		PortsOut = append(PortsOut, portOut)
+	}
+
 	if code := client.SetProcessCallback(process); code != 0 {
 		fmt.Println("Failed to set process callback:", jack.StrError(code))
 		return
@@ -43,15 +52,6 @@ func main() {
 	if code := client.Activate(); code != 0 {
 		fmt.Println("Failed to activate client:", jack.StrError(code))
 		return
-	}
-
-	for i := 0; i < channels; i++ {
-		portIn := client.PortRegister(fmt.Sprintf("in_%d", i), jack.DEFAULT_AUDIO_TYPE, jack.PortIsInput, 0)
-		PortsIn = append(PortsIn, portIn)
-	}
-	for i := 0; i < channels; i++ {
-		portOut := client.PortRegister(fmt.Sprintf("out_%d", i), jack.DEFAULT_AUDIO_TYPE, jack.PortIsOutput, 0)
-		PortsOut = append(PortsOut, portOut)
 	}
 
 	fmt.Println(client.GetName())
